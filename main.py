@@ -133,13 +133,10 @@ for epoch in range(epochs):
                     num_steps=40, step_size=0.01,
                     eps=0.3, eps_norm='inf',
                     step_norm='inf')
-            net.train()
-        
 
+        net.train()
         optimizer.zero_grad()
-
         predicted = net.forward(x)
-
 
         loss = criterion(predicted, y)
         loss.backward()

@@ -38,6 +38,8 @@ lr = 1e-5
 lr = 1e-4
 train_percentage = 0.9
 robust = True
+robust = False
+robust = True
 batch_size = 16
 
 run['lr'] = lr
@@ -99,14 +101,23 @@ optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=0.)
 def evaluate(net, loader, device, logname):
     with torch.no_grad():
         net.eval()
+        correct = 0
+        total = 0
         for x, y in loader:
             x, y = x.to(device), y.to(device)
 
             #predicted = net.forward(x)['out']
             #predicted = torch.nn.Softmax(dim=1)(predicted)
             predicted = net.forward(x)
+
+            argp = torch.argmax(predicted, axis=1).reshape(-1)
+            argy = torch.argmax(y, axis=1).reshape(-1)
+            correct += torch.sum(argp == argy).item()
+            total += len(argy)
+
             loss = criterion(predicted, y)
-            run[logname].log(loss.item())
+            run[f"{logname}/loss"].log(loss.item())
+        run[f"{logname}/acc"].log(correct/total)
 
 
 for epoch in range(epochs):
@@ -135,7 +146,7 @@ for epoch in range(epochs):
         optimizer.step()
         run["train/loss"].log(loss.item())
 
-    evaluate(net, val_loader, device, "val/loss")
-    evaluate(net, aug_loader, device, "aug/loss")
+    evaluate(net, val_loader, device, "val")
+    evaluate(net, aug_loader, device, "aug")
 
 run.stop()

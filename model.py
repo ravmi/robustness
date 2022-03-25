@@ -60,10 +60,21 @@ class PickingSegmentationResnet(nn.Module):
             x = net_to_img(x).numpy()
             y = np.argmax(y.numpy(), axis=0)
             predicted = np.argmax(predicted.numpy(), axis=0)
+            predicted_as_true = np.sum((predicted == 1))
+            predicted_as_false = np.sum((predicted == 0))
+
+            shouldbe_true = np.sum(y == 1)
+            shouldbe_false = np.sum(y == 0)
 
             logger.report_image(f"{experiment_name}/img", "img", x)
             logger.report_image(f"{experiment_name}/truth", "img", y)
             logger.report_image(f"{experiment_name}/guessed", "img", predicted)
+
+            logger.report_scalar(f"{experiment_name}/as_true", "predicted", predicted_as_true)
+            logger.report_scalar(f"{experiment_name}/as_true", "shouldbe", shouldbe_true)
+
+            logger.report_scalar(f"{experiment_name}/as_false", "predicted", predicted_as_false)
+            logger.report_scalar(f"{experiment_name}/as_false", "shouldbe", shouldbe_false)
 
 
             for m in metrics:

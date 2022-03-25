@@ -3,6 +3,7 @@ import torchvision
 import torch
 import numpy as np
 import config
+from utils import net_to_img
 
 class PickingSegmentationResnet(nn.Module):
     def __init__(self, criterion, device):
@@ -47,6 +48,14 @@ class PickingSegmentationResnet(nn.Module):
                     metric.measure(
                         predicted.detach().cpu().numpy(),
                         y.detach().cpu().numpy())
+
+            x = net_to_img(x.detach().cpu().numpy())
+            y = np.argmax(y.detach().cpu().numpy(), axis=0)
+            predicted = np.argmax(predicted.detach().cpu().numpy(), axis=0)
+
+            logger.report_image(f"{experiment_name}/img", "img", x)
+            logger.report_image(f"{experiment_name}/truth", "img", y)
+            logger.report_image(f"{experiment_name}/guessed", "img", predicted)
 
             logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
 

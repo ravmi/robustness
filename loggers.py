@@ -11,3 +11,7 @@ class ClearMLLogger():
         key = (plot_name, series_name)
         self.log.report_scalar(plot_name, series_name, iteration=self.iteration[key], value=scalar)
         self.iteration[key] += 1
+
+    def report_image(self, plot_name, series_name, img):
+        key = (plot_name, series_name)
+        self.log.report_image(plot_name, series_name, iteration=self.iteration[key], value=img)

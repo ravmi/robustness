@@ -76,7 +76,8 @@ metrics = [
     Metric("pixel_accuracy"),
     Metric("precision"),
     Metric("recall"),
-    Metric("balanced")
+    Metric("balanced"),
+    Metric("top5")
 ]
 
 for epoch in range(epochs):

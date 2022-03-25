@@ -13,13 +13,11 @@ import argparse
 from metrics import Metric
 import numpy as np
 from model import PickingSegmentationResnet
-from loggers import CLearMlLogger
+from loggers import ClearMLLogger
 
 ## Parsing ##
 task = Task.init(project_name="robustness", task_name="experiment_test", reuse_last_task_id=False)
-log = Logger.current_logger()
-log_loss_per_epoch = CLearMlLogger("loss_per_epoch")
-log_acc_per_epoch = CLearMlLogger("acc_per_epoch")
+logger = ClearMLLogger("loss_per_epoch")
 
 parser = argparse.ArgumentParser(description='Choose your hyperparameters.')
 
@@ -70,7 +68,12 @@ metrics = [
     ("balanced", Metric("balanced"))
 ]
 
+                logger.report_scalar(f"{experiment_name}/loss_per_step", "loss", loss)
+            logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
+
+
 for epoch in range(epochs):
+    losses = list()
     for x, y in train_loader:
         x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
@@ -87,11 +90,14 @@ for epoch in range(epochs):
         predicted = net.forward(x)
 
         loss = criterion(predicted, y)
+        losses.append(loss.item())
+        logger.report_scalar("train/loss_per_step", "loss", loss.item())
         loss.backward()
         optimizer.step()
         #run["train/loss"].log(loss.item())
+    logger.report_scalar("train/loss_per_epoch", "loss", np.asarray(losses).mean())
 
-    net.evaluate(val_loader, metrics, log_acc_per_epoch)
-    net.evaluate(aug_loader, metrics, log_acc_per_epoch)
+    net.evaluate(val_loader, metrics, log, "val")
+    net.evaluate(aug_loader, metrics, log, "aug")
     #evaluate(net, val_loader, device, "val")
     #evaluate(net, aug_loader, device, "aug")

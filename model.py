@@ -1,6 +1,7 @@
 from torch import nn
 import torchvision
 import torch
+import numpy as np
 
 class PickingSegmentationResnet(nn.Module):
     def __init__(self, criterion, device):
@@ -23,23 +24,24 @@ class PickingSegmentationResnet(nn.Module):
     def eval(self):
         self.resnet.eval()
 
-    def evaluate(self, loader, metrics, logger):
+    def evaluate(self, loader, metrics, logger, experiment_name="val"):
         self.eval()
         with torch.no_grad():
+            losses = list()
             for x, y in loader:
                 x, y = x.to(self.device), y.to(self.device)
 
                 predicted = self.forward(x)
-                loss = self.criterion(predicted, y)
+                loss = self.criterion(predicted, y).item()
+                logger.report_scalar(f"{experiment_name}/loss_per_step", "loss", loss)
+                losses.append(loss)
 
                 for name, metric in metrics:
                     metric.measure(
                         predicted.detach().cpu().numpy(),
                         y.detach().cpu().numpy())
 
-                #logger.report_scalar()
-                #run[f"{logname}/loss"].log(loss.item())
+            logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
 
-            for name, m in metrics:
-                logger.report_scalar(name, m.total())
-                #run[f"{logname}/{m.metric_name}"].log(m.total())
+            for m in metrics:
+                logger.report_scalar(f"{experiment_name}/acc", m.name, m.total())

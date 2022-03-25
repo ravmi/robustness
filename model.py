@@ -44,4 +44,4 @@ class PickingSegmentationResnet(nn.Module):
             logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
 
             for m in metrics:
-                logger.report_scalar(f"{experiment_name}/acc", m.name, m.total())
+                logger.report_scalar(f"{experiment_name}/acc", m.metric_name, m.total())

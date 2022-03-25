@@ -62,15 +62,11 @@ net = PickingSegmentationResnet(criterion, device)
 optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=0.)
 
 metrics = [
-    ("pixel_accuracy", Metric("pixel_accuracy")),
-    ("precision", Metric("precision")),
-    ("recall", Metric("recall")),
-    ("balanced", Metric("balanced"))
+    Metric("pixel_accuracy"),
+    Metric("precision"),
+    Metric("recall"),
+    Metric("balanced")
 ]
-
-                logger.report_scalar(f"{experiment_name}/loss_per_step", "loss", loss)
-            logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
-
 
 for epoch in range(epochs):
     losses = list()

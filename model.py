@@ -11,6 +11,7 @@ class PickingSegmentationResnet(nn.Module):
         self.resnet = resnet
         self.criterion = criterion
         self.device = device
+        self.to(device)
 
     def forward(self, x):
         predicted = self.resnet.forward(x)['out']
@@ -25,7 +26,7 @@ class PickingSegmentationResnet(nn.Module):
     def evaluate(self, loader, metrics, logger):
         self.eval()
         with torch.no_grad():
-            for x, y in enumerate(loader):
+            for x, y in loader:
                 x, y = x.to(self.device), y.to(self.device)
 
                 predicted = self.forward(x)

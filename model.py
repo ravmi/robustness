@@ -35,7 +35,7 @@ class PickingSegmentationResnet(nn.Module):
                 for name, metric in metrics:
                     metric.measure(
                         predicted.detach().cpu().numpy(),
-                        y.detach.cpu().numpy())
+                        y.detach().cpu().numpy())
 
                 #logger.report_scalar()
                 #run[f"{logname}/loss"].log(loss.item())

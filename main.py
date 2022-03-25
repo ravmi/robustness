@@ -29,9 +29,10 @@ parser.add_argument('--train_split', type=float, default=0.9,
                     help="what percentage of dataset is going to be in the training set")
 parser.add_argument('--robust', action="store_true", help="False for default training, True for PGD")
 parser.add_argument('--device', type=str, default="cuda", help="device to run on (cuda/cpu")
-parser.add_argument('--debug', action="store_true", help="Smaller model and smaller dataset")
+#parser.add_argument('--debug', action="store_true", help="Smaller model and smaller dataset")
 
 parameters = vars(parser.parse_args())
+parameters['debug'] = config.debug
 parameters = task.connect(parameters)
 
 device = torch.device(parameters['device'])

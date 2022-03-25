@@ -70,6 +70,7 @@ class Metric():
             pcopy[y_min:y_max+1, x_min:x_max+1] = -np.inf
 
             correct += int(truth[1][y][x] == 1)
+        return correct / 5
 
 
     def __init__(self, metric):

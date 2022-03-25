@@ -9,7 +9,6 @@ from utils import img_to_net
 import sys
 import numpy
 from torchvision.transforms import Normalize
-numpy.set_printoptions(threshold=sys.maxsize)
 
 MIN_ID = 0
 BOARD_COUNT = 1100

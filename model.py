@@ -56,7 +56,6 @@ class PickingSegmentationResnet(nn.Module):
             x = unnormalize(x)
             y = y[0].detach().cpu()
             predicted = predicted[0].detach().cpu()
-            print(x.shape)
             x = net_to_img(x).numpy()
             y = np.argmax(y.numpy(), axis=0)
             predicted = np.argmax(predicted.numpy(), axis=0)
@@ -67,8 +66,8 @@ class PickingSegmentationResnet(nn.Module):
             shouldbe_false = np.sum(y == 0)
 
             logger.report_image(f"{experiment_name}/img", "img", x)
-            logger.report_image(f"{experiment_name}/truth", "img", y)
-            logger.report_image(f"{experiment_name}/guessed", "img", predicted)
+            logger.report_image(f"{experiment_name}/truth", "img", y * 255)
+            logger.report_image(f"{experiment_name}/guessed", "img", predicted * 255)
 
             logger.report_scalar(f"{experiment_name}/as_true", "predicted", predicted_as_true)
             logger.report_scalar(f"{experiment_name}/as_true", "shouldbe", shouldbe_true)

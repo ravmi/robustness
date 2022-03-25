@@ -16,9 +16,6 @@ from model import PickingSegmentationResnet
 from loggers import ClearMLLogger
 import config
 
-DEBUG = False
-DEBUG_SIZE = 20
-
 ## Parsing ##
 task = Task.init(project_name="robustness", task_name="experiment_test", reuse_last_task_id=False)
 logger = ClearMLLogger("loss_per_epoch")
@@ -43,24 +40,23 @@ lr = parameters['lr']
 train_percentage = parameters['train_split']
 robust = parameters['robust']
 batch_size = parameters['batch_size']
-DEBUG = parameters['debug']
 
-if DEBUG:
+if config.debug:
     device = torch.device("cpu")
 
 ## Prepare dataset ##
 
 data = BrickDataset()
-if DEBUG:
-    data = Subset(data, range(DEBUG_SIZE))
+if config.debug:
+    data = Subset(data, range(config.debug_size))
 train_size = int(train_percentage * len(data))
 val_size = len(data) - train_size
 
 train, val = (Subset(data, range(train_size)), Subset(data, range(train_size, train_size+val_size)))
 
 data_augmented = BrickDatasetAugmented()
-if DEBUG:
-    data = Subset(data, range(DEBUG_SIZE * 10))
+if config.debug:
+    data = Subset(data, range(config.debug_size * 10))
 # 10 is very specific for the dataset. Every sample in BrickDataset has 10 samples in BrickDataSetAugmented,
 # the order is important. We want samples in val and aug to match
 data_augmented = Subset(data_augmented, range(train_size * 10, len(data_augmented)))
@@ -71,7 +67,7 @@ aug_loader = DataLoader(data_augmented, batch_size=batch_size, shuffle=True)
 
 ## Prepare the model and the optimizer ##
 criterion = nn.BCELoss()
-net = PickingSegmentationResnet(criterion, device, DEBUG)
+net = PickingSegmentationResnet(criterion, device)
 optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=0.)
 
 metrics = [

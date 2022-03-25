@@ -2,14 +2,15 @@ from torch import nn
 import torchvision
 import torch
 import numpy as np
+import config
 
 class PickingSegmentationResnet(nn.Module):
-    def __init__(self, criterion, device, debug=False):
+    def __init__(self, criterion, device):
         super(PickingSegmentationResnet, self).__init__()
 
         resnet = torchvision.models.segmentation.fcn_resnet50(num_classes=2)
         resnet.backbone.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        if debug:
+        if config.debug:
             resnet.backbone.layer1 = nn.Conv2d(64, 256, kernel_size=(1, 1))
             resnet.backbone.layer2 = nn.Conv2d(256, 512, kernel_size=(1, 1))
             resnet.backbone.layer3 = nn.Conv2d(512, 1024, kernel_size=(1, 1))

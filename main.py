@@ -14,6 +14,7 @@ from metrics import Metric
 import numpy as np
 from model import PickingSegmentationResnet
 from loggers import ClearMLLogger
+import config
 
 DEBUG = False
 DEBUG_SIZE = 20

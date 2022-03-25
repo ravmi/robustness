@@ -39,7 +39,7 @@ class PickingSegmentationResnet(nn.Module):
 
                 predicted = self.forward(x)
                 loss = self.criterion(predicted, y).item()
-                logger.report_scalar(f"{experiment_name}/loss_per_step", "loss", loss)
+                #logger.report_scalar(f"{experiment_name}/loss_per_step", "loss", loss)
                 losses.append(loss)
 
                 for metric in metrics:

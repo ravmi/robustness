@@ -16,7 +16,7 @@ from model import PickingSegmentationResnet
 from loggers import CLearMlLogger
 
 ## Parsing ##
-task = Task.init(project_name="robustness", task_name="experiment_test")
+task = Task.init(project_name="robustness", task_name="experiment_test", reuse_last_task_id=False)
 log = Logger.current_logger()
 log_loss_per_epoch = CLearMlLogger("loss_per_epoch")
 log_acc_per_epoch = CLearMlLogger("acc_per_epoch")

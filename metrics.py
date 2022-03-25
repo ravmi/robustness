@@ -54,8 +54,10 @@ class Metric():
         return (prec + rec) / 2
 
     def top5(self, predicted, truth, radius=15, samples=5):
-        y_limit, x_limit = truth.shape[:2]
-        pcopy = predicted.copy()
+
+        y_limit, x_limit = truth.shape[1:3]
+        pcopy = predicted[1].copy()
+        correct = 0
         for i in range(5):
             y, x = np.unravel_index(pcopy.argmax(), pcopy.shape)
 
@@ -65,7 +67,9 @@ class Metric():
             x_min = max(0, x - radius)
             x_max = min(x_limit, y + radius)
 
-            pcopy[:, y_min:y_max+1, x_min:x_max+1] = -np.inf
+            pcopy[y_min:y_max+1, x_min:x_max+1] = -np.inf
+
+            correct += int(truth[1][y][x] == 1)
 
 
     def __init__(self, metric):

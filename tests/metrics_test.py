@@ -195,3 +195,24 @@ def test_balanced_3():
     shouldbe = (1 + 2 * 5/6.) / 3
     shouldbe = pytest.approx(shouldbe)
     assert result == shouldbe
+
+
+# TODO implemented top5 metric tests
+'''
+bigp = np.zeros((3, 100, 100))
+bigy = np.zeros((3, 100, 100))
+
+patch = np.ones((11, 11)) * 0.5
+patch[5][5] = 1.
+
+bigp
+
+
+def test_balanced_3():
+    ac = Metric("balanced")
+    ac.measure(pb, yb)
+    result = ac.total()
+    shouldbe = (1 + 2 * 5/6.) / 3
+    shouldbe = pytest.approx(shouldbe)
+    assert result == shouldbe
+'''

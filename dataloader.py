@@ -101,7 +101,8 @@ class BrickDataset(torch.utils.data.Dataset):
 
         img = Image.open(os.path.join(RESULTS, f"{i}-out.png")).convert("L")
         y = (np.asarray(img) > 128)
-        x, y = torch.tensor(x), torch.tensor(y)
+        #x, y = torch.tensor(x), torch.tensor(y)
+        y = torch.tensor(y)
 
         y = y.long()
         y = F.one_hot(y, num_classes=2).permute(2, 0, 1)
@@ -139,7 +140,8 @@ class BrickDatasetAugmented(torch.utils.data.Dataset):
 
         img = Image.open(os.path.join(RESULTS, f"{img_id}-out.png")).convert("L")
         y = (np.asarray(img) > 128)
-        x, y = torch.tensor(x), torch.tensor(y)
+        #x, y = torch.tensor(x), torch.tensor(y)
+        y = torch.tensor(y)
 
         y = y.long()
         y = F.one_hot(y, num_classes=2).permute(2, 0, 1)

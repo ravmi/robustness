@@ -17,8 +17,6 @@ from loggers import ClearMLLogger
 import config
 
 ## Parsing ##
-task = Task.init(project_name="robustness", task_name="experiment_test", reuse_last_task_id=False)
-logger = ClearMLLogger("loss_per_epoch")
 
 parser = argparse.ArgumentParser(description='Choose your hyperparameters.')
 
@@ -33,7 +31,6 @@ parser.add_argument('--device', type=str, default="cuda", help="device to run on
 
 parameters = vars(parser.parse_args())
 parameters['debug'] = config.debug
-parameters = task.connect(parameters)
 
 device = torch.device(parameters['device'])
 epochs = parameters['epochs']
@@ -44,6 +41,10 @@ batch_size = parameters['batch_size']
 
 if config.debug:
     device = torch.device("cpu")
+
+task = Task.init(project_name="robustness", task_name=f"lr_{lr}, robust_{robust}, epochs_{epochs}", reuse_last_task_id=False)
+parameters = task.connect(parameters)
+logger = ClearMLLogger("loss_per_epoch")
 
 ## Prepare dataset ##
 

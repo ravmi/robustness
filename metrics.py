@@ -1,34 +1,37 @@
 import numpy as np
 
+#iou
+#pixel accuracy
+# f1
 
-class Accuracy():
-    @classmethod
-    def mean_accuracy(predicted, truth):
-        argp = np.argmax(predicted, axis=1).reshape(-1)
-        argt = np.argmax(truth, axis=1).reshape(-1)
+
+class Metric():
+    def pixel_accuracy(self, predicted, truth):
+        argp = np.argmax(predicted, axis=0).reshape(-1)
+        argt = np.argmax(truth, axis=0).reshape(-1)
 
         return np.mean(argp == argt)
 
-    @classmethod
-    def recall(predicted, truth):
-        argp = np.argmax(predicted, axis=1).reshape(-1)
-        argt = np.argmax(truth, axis=1).reshape(-1)
+    def recall(self, predicted, truth):
+        argp = np.argmax(predicted, axis=0).reshape(-1)
+        argt = np.argmax(truth, axis=0).reshape(-1)
 
         positive = argp == 1
         negative = argp == 0
 
         true_positive = positive & (argp == argt)
-        false_negative = negative & (argp == argt)
+        false_negative = negative & (argp != argt)
 
         tpi = np.sum(true_positive)
         fni = np.sum(false_negative)
 
+        if tpi + fni == 0:
+            return None
         return tpi / (tpi + fni)
 
-    @classmethod
-    def precision(predicted, truth):
-        argp = np.argmax(predicted, axis=1).reshape(-1)
-        argt = np.argmax(truth, axis=1).reshape(-1)
+    def precision(self, predicted, truth):
+        argp = np.argmax(predicted, axis=0).reshape(-1)
+        argt = np.argmax(truth, axis=0).reshape(-1)
 
         positive = argp == 1
         true_positive = positive & (argp == argt)
@@ -37,17 +40,20 @@ class Accuracy():
         tpi = np.sum(true_positive)
         fpi = np.sum(false_positive)
 
+        if tpi + fpi == 0:
+            return None
         return tpi / (tpi + fpi)
 
-    @classmethod
-    def balanced(predicted, truth):
-        prec = Accuracy.precision(predicted, truth)
-        rec = Accuracy.recall(predicted, truth)
+    def balanced(self, predicted, truth):
+        prec = self.precision(predicted, truth)
+        rec = self.recall(predicted, truth)
+
+        if prec == None or rec == None:
+            return None
 
         return (prec + rec) / 2
 
-    @classmethod
-    def top5(predicted, truth, radius=15, samples=5):
+    def top5(self, predicted, truth, radius=15, samples=5):
         y_limit, x_limit = truth.shape[:2]
         pcopy = predicted.copy()
         for i in range(5):
@@ -68,30 +74,37 @@ class Accuracy():
         The channel can a first or second dim, depending if we use
         batch or sample (both are supported)."""
 
-        if metric == "mean":
-            self.accuracy = mean_accuracy
+        self.metric_name = metric
+        if metric == "pixel_accuracy":
+            self.metric = self.pixel_accuracy
         elif metric == "recall":
-            self.accuracy = recall
+            self.metric = self.recall
         elif metric == "precision":
-            self.accuracy = precision
+            self.metric = self.precision
         elif metric == "balanced":
-            self.accuracy = balanced
+            self.metric = self.balanced
         elif metric == "top5":
-            self.accuracy = top5
+            self.metric = self.top5
+        else:
+            raise ValueError("Uncorrect metric given")
 
         self.measurements = list()
 
-        def measure(self, predicted, truth):
-            assert predicted.shape == truth.shape
+    def measure(self, predicted, truth):
+        assert predicted.shape == truth.shape
 
-            if predicted.ndim == 4:
-                for i in range(len(predicted)):
-                    measurement = self.metric(predicted[i], truth[i])
+        if predicted.ndim == 4:
+            for i in range(len(predicted)):
+                measurement = self.metric(predicted[i], truth[i])
+                if measurement is not None:
                     self.measurements.append(measurement)
-            else:
-                assert predicted.ndim == 3
-                measurement = self.metric(predicted, truth)
+        else:
+            assert predicted.ndim == 3
+            measurement = self.metric(predicted, truth)
+            if measurement is not None:
                 self.measurements.append(measurement)
 
-        def accuracy():
-            return sum(self.measurements) / len(self.measurements)
+    def total(self):
+        if len(self.measurements) == 0:
+            return 0.
+        return sum(self.measurements) / len(self.measurements)

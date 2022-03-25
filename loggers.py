@@ -14,4 +14,5 @@ class ClearMLLogger():
 
     def report_image(self, plot_name, series_name, img):
         key = (plot_name, series_name)
-        self.log.report_image(plot_name, series_name, iteration=self.iteration[key], value=img)
+        self.log.report_image(plot_name, series_name, iteration=self.iteration[key], image=img)
+        self.iteration[key] += 1

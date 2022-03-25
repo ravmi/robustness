@@ -4,11 +4,17 @@ import torch
 import numpy as np
 
 class PickingSegmentationResnet(nn.Module):
-    def __init__(self, criterion, device):
+    def __init__(self, criterion, device, debug=False):
         super(PickingSegmentationResnet, self).__init__()
 
         resnet = torchvision.models.segmentation.fcn_resnet50(num_classes=2)
         resnet.backbone.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        if debug:
+            resnet.backbone.layer1 = nn.Conv2d(64, 256, kernel_size=(1, 1))
+            resnet.backbone.layer2 = nn.Conv2d(256, 512, kernel_size=(1, 1))
+            resnet.backbone.layer3 = nn.Conv2d(512, 1024, kernel_size=(1, 1))
+            resnet.backbone.layer4 = nn.Conv2d(1024, 2048, kernel_size=(1, 1))
+
         self.resnet = resnet
         self.criterion = criterion
         self.device = device
@@ -36,7 +42,7 @@ class PickingSegmentationResnet(nn.Module):
                 logger.report_scalar(f"{experiment_name}/loss_per_step", "loss", loss)
                 losses.append(loss)
 
-                for name, metric in metrics:
+                for metric in metrics:
                     metric.measure(
                         predicted.detach().cpu().numpy(),
                         y.detach().cpu().numpy())

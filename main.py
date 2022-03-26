@@ -77,7 +77,8 @@ metrics = [
     Metric("precision"),
     Metric("recall"),
     Metric("balanced"),
-    Metric("top5")
+    Metric("top5"),
+    Metric("class_imbalance")
 ]
 
 for epoch in range(epochs):

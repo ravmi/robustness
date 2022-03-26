@@ -6,6 +6,12 @@ import numpy as np
 
 
 class Metric():
+    def class_imbalance(self, predicted, truth):
+        argp = np.argmax(predicted, axis=0).reshape(-1)
+        argt = np.argmax(truth, axis=0).reshape(-1)
+
+        return np.all(argp == 0) or np.all(argp == 1)
+
     def pixel_accuracy(self, predicted, truth):
         argp = np.argmax(predicted, axis=0).reshape(-1)
         argt = np.argmax(truth, axis=0).reshape(-1)
@@ -90,6 +96,8 @@ class Metric():
             self.metric = self.balanced
         elif metric == "top5":
             self.metric = self.top5
+        elif metric == "class_imbalance":
+            self.metric = self.class_imbalance
         else:
             raise ValueError("Uncorrect metric given")
 

@@ -50,31 +50,32 @@ class PickingSegmentationResnet(nn.Module):
                         y.detach().cpu().numpy())
 
             logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
-
-            x = x[0]
-            x = x[:3, :, :].detach().cpu()
-            x = unnormalize(x)
-            y = y[0].detach().cpu()
-            predicted = predicted[0].detach().cpu()
-            x = net_to_img(x).numpy()
-            y = np.argmax(y.numpy(), axis=0)
-            predicted = np.argmax(predicted.numpy(), axis=0)
-            predicted_as_true = np.sum((predicted == 1))
-            predicted_as_false = np.sum((predicted == 0))
-
-            shouldbe_true = np.sum(y == 1)
-            shouldbe_false = np.sum(y == 0)
-
-            logger.report_image(f"{experiment_name}/img", "img", x)
-            logger.report_image(f"{experiment_name}/truth", "img", y * 255)
-            logger.report_image(f"{experiment_name}/guessed", "img", predicted * 255)
-
-            logger.report_scalar(f"{experiment_name}/as_true", "predicted", predicted_as_true)
-            logger.report_scalar(f"{experiment_name}/as_true", "shouldbe", shouldbe_true)
-
-            logger.report_scalar(f"{experiment_name}/as_false", "predicted", predicted_as_false)
-            logger.report_scalar(f"{experiment_name}/as_false", "shouldbe", shouldbe_false)
-
-
             for m in metrics:
                 logger.report_scalar(f"{experiment_name}/acc", m.metric_name, m.total())
+
+            for i in range(len(x)):
+                x = x[i]
+                x = x[:3, :, :].detach().cpu()
+                x = unnormalize(x)
+                y = y[i].detach().cpu()
+                predicted = predicted[0].detach().cpu()
+                x = net_to_img(x).numpy()
+                y = np.argmax(y.numpy(), axis=0)
+                predicted = np.argmax(predicted.numpy(), axis=0)
+                predicted_as_true = np.sum((predicted == 1))
+                predicted_as_false = np.sum((predicted == 0))
+
+                shouldbe_true = np.sum(y == 1)
+                shouldbe_false = np.sum(y == 0)
+
+                logger.report_image(f"{experiment_name}/img", f"img{i}", x)
+                logger.report_image(f"{experiment_name}/truth", f"img{i}", y * 255)
+                logger.report_image(f"{experiment_name}/guessed", f"img{i}", predicted * 255)
+
+                logger.report_scalar(f"{experiment_name}/as_true", f"predicted{i}", predicted_as_true)
+                logger.report_scalar(f"{experiment_name}/as_true", f"shouldbe{i}", shouldbe_true)
+
+                logger.report_scalar(f"{experiment_name}/as_false", f"predicted{i}", predicted_as_false)
+                logger.report_scalar(f"{experiment_name}/as_false", f"shouldbe{i}", shouldbe_false)
+
+

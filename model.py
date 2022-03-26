@@ -52,13 +52,16 @@ class PickingSegmentationResnet(nn.Module):
             logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
             for m in metrics:
                 logger.report_scalar(f"{experiment_name}/acc", m.metric_name, m.total())
-
-            for i in range(len(x)):
-                x = x[i]
+            
+            xb = x
+            yb = y
+            pb = predicted
+            for i in range(len(xb)):
+                x = xb[i]
                 x = x[:3, :, :].detach().cpu()
                 x = unnormalize(x)
-                y = y[i].detach().cpu()
-                predicted = predicted[0].detach().cpu()
+                y = yb[i].detach().cpu()
+                predicted = pb[i].detach().cpu()
                 x = net_to_img(x).numpy()
                 y = np.argmax(y.numpy(), axis=0)
                 predicted = np.argmax(predicted.numpy(), axis=0)

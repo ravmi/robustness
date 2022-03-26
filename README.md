@@ -4,6 +4,7 @@
 
 metrics:
 - accuracy (mean, ...)
+- class imbalance calculates the percentage of images in an epoch such that all pixels where assigned to one class (usually background)
 
 robust
 

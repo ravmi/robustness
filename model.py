@@ -75,10 +75,10 @@ class PickingSegmentationResnet(nn.Module):
                 logger.report_image(f"{experiment_name}/truth", f"img{i}", y * 255)
                 logger.report_image(f"{experiment_name}/guessed", f"img{i}", predicted * 255)
 
-                logger.report_scalar(f"{experiment_name}/as_true", f"predicted{i}", predicted_as_true)
-                logger.report_scalar(f"{experiment_name}/as_true", f"shouldbe{i}", shouldbe_true)
+                logger.report_scalar(f"{experiment_name}/as_true{i}", f"predicted", predicted_as_true)
+                logger.report_scalar(f"{experiment_name}/as_true{i}", f"shouldbe", shouldbe_true)
 
-                logger.report_scalar(f"{experiment_name}/as_false", f"predicted{i}", predicted_as_false)
-                logger.report_scalar(f"{experiment_name}/as_false", f"shouldbe{i}", shouldbe_false)
+                logger.report_scalar(f"{experiment_name}/as_false{i}", f"predicted", predicted_as_false)
+                logger.report_scalar(f"{experiment_name}/as_false{i}", f"shouldbe", shouldbe_false)
 
 

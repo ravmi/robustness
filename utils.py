@@ -3,15 +3,19 @@ import numpy as np
 
 
 def net_to_img(data):
-    data = torch.tensor(data)
     assert data.ndim == 3
-    return data.permute(1, 2, 0)
+    if torch.is_tensor(data):
+        return data.permute(1, 2, 0)
+    else:
+        return data.transpose(1, 2, 0)
 
 
 def img_to_net(data):
-    data = torch.tensor(data)
     assert data.ndim == 3
-    return data.permute(2, 0, 1)
+    if torch.is_tensor(data):
+        return data.permute(2, 0, 1)
+    else:
+        return data.transpose(2, 0, 1)
 
 def tensor_to_numpy(tensor):
     return tensor.detach().cpu().numpy()

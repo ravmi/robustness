@@ -5,6 +5,7 @@ import numpy as np
 import config
 from utils import net_to_img, unnormalize
 
+
 class PickingSegmentationResnet(nn.Module):
     def __init__(self, criterion, device):
         super(PickingSegmentationResnet, self).__init__()
@@ -42,7 +43,6 @@ class PickingSegmentationResnet(nn.Module):
 
                 predicted = self.forward(x)
                 loss = self.criterion(predicted, y).item()
-                #logger.report_scalar(f"{experiment_name}/loss_per_step", "loss", loss)
                 losses.append(loss)
 
                 for metric in metrics:
@@ -53,28 +53,29 @@ class PickingSegmentationResnet(nn.Module):
             logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
             for m in metrics:
                 logger.report_scalar(f"{experiment_name}/acc", m.metric_name, m.total())
-            
-            xb = x
-            yb = y
-            pb = predicted
-            for i in range(len(xb)):
-                x = xb[i]
-                x = x[:3, :, :].detach().cpu()
+
+            def to_numpy(tensor):
+                return tensor.detach().cpu().numpy()
+
+            for x, y, p in zip(to_numpy(x), to_numpy(y), to_numpy(predicted)):
+                # removing depth
+                x = x[:3, :, :]
                 x = unnormalize(x)
-                y = yb[i].detach().cpu()
-                predicted = pb[i].detach().cpu()
-                x = net_to_img(x).numpy()
-                y = np.argmax(y.numpy(), axis=0)
-                predicted = np.argmax(predicted.numpy(), axis=0)
-                predicted_as_true = np.sum((predicted == 1))
-                predicted_as_false = np.sum((predicted == 0))
+                x = net_to_img(x)
+
+                p = p[0]
+                p = (p > 0) * 1.0
+                y = y[0]
+
+                predicted_as_true = np.sum((p == 1))
+                predicted_as_false = np.sum((p == 0))
 
                 shouldbe_true = np.sum(y == 1)
                 shouldbe_false = np.sum(y == 0)
 
                 logger.report_image(f"img{i}", f"{experiment_name}/img", x)
                 logger.report_image(f"img{i}", f"{experiment_name}/truth", y * 255)
-                logger.report_image(f"img{i}", f"{experiment_name}/guessed", predicted * 255)
+                logger.report_image(f"img{i}", f"{experiment_name}/guessed", p * 255)
 
                 logger.report_scalar(f"{experiment_name}/as_true{i}", f"predicted", predicted_as_true)
                 logger.report_scalar(f"{experiment_name}/as_true{i}", f"shouldbe", shouldbe_true)

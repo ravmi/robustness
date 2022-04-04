@@ -1,89 +1,11 @@
 import numpy as np
 
-#iou
-#pixel accuracy
-# f1
-
-
 class Metric():
-    def class_imbalance(self, predicted, truth):
-        argp = np.argmax(predicted, axis=0).reshape(-1)
-        argt = np.argmax(truth, axis=0).reshape(-1)
-
-        return np.all(argp == 0) or np.all(argp == 1)
-
-    def pixel_accuracy(self, predicted, truth):
-        argp = np.argmax(predicted, axis=0).reshape(-1)
-        argt = np.argmax(truth, axis=0).reshape(-1)
-
-        return np.mean(argp == argt)
-
-    def recall(self, predicted, truth):
-        argp = np.argmax(predicted, axis=0).reshape(-1)
-        argt = np.argmax(truth, axis=0).reshape(-1)
-
-        positive = argp == 1
-        negative = argp == 0
-
-        true_positive = positive & (argp == argt)
-        false_negative = negative & (argp != argt)
-
-        tpi = np.sum(true_positive)
-        fni = np.sum(false_negative)
-
-        if tpi + fni == 0:
-            return None
-        return tpi / (tpi + fni)
-
-    def precision(self, predicted, truth):
-        argp = np.argmax(predicted, axis=0).reshape(-1)
-        argt = np.argmax(truth, axis=0).reshape(-1)
-
-        positive = argp == 1
-        true_positive = positive & (argp == argt)
-        false_positive = positive & (argp != argt)
-
-        tpi = np.sum(true_positive)
-        fpi = np.sum(false_positive)
-
-        if tpi + fpi == 0:
-            return None
-        return tpi / (tpi + fpi)
-
-    def balanced(self, predicted, truth):
-        prec = self.precision(predicted, truth)
-        rec = self.recall(predicted, truth)
-
-        if prec == None or rec == None:
-            return None
-
-        return (prec + rec) / 2
-
-    def top5(self, predicted, truth, radius=15, samples=5):
-
-        y_limit, x_limit = truth.shape[1:3]
-        pcopy = predicted[1].copy()
-        correct = 0
-        for i in range(5):
-            y, x = np.unravel_index(pcopy.argmax(), pcopy.shape)
-
-            y_min = max(0, y - radius)
-            y_max = min(y_limit, y + radius)
-
-            x_min = max(0, x - radius)
-            x_max = min(x_limit, y + radius)
-
-            pcopy[y_min:y_max+1, x_min:x_max+1] = -np.inf
-
-            correct += int(truth[1][y][x] == 1)
-        return correct / 5
-
-
     def __init__(self, metric):
-        """Assumes that input arrays have two channels,
-        where the first denotes NO and the second denotes YES.
-        The channel can a first or second dim, depending if we use
-        batch or sample (both are supported)."""
+        """
+        Assumes that the arrays have just single channel (binary classification).
+        Inputs can have ndim = 3 or ndim = 4.
+        """
 
         self.metric_name = metric
         if metric == "pixel_accuracy":
@@ -103,21 +25,114 @@ class Metric():
 
         self.measurements = list()
 
+    def to_binary(self, predicted: np.ndarray):
+        """
+        Gives binary answers of shape predicted.shape
+        predicted: logits of shape (1, height, widths) - single channel
+
+        As the input are logits, transforming it to True/False is simple comparison to 0.
+        """
+        assert predicted.ndim == 3
+
+        return (predicted > 0.0) * 1.0
+
+
+    def class_imbalance(self, predicted, truth):
+        # features, height, width
+        assert predicted.ndim == 3
+        guess = self.get_binary(predicted)
+        imbalance = np.all(guess == 0) or np.all(guess == 1)
+
+        return imbalance * 1.0
+
+    def pixel_accuracy(self, predicted, truth):
+        predicted = self.to_binary(predicted)
+        compare = (predicted == truth).reshape(-1)
+        return np.mean(compare)
+
+
+    def confusion_matrix(self, predicted, truth):
+        """
+        Returns a dict that represents the confusion matrix.
+        """
+        assert predicted.ndim == 3
+        assert truth.ndim == 3
+        predicted = self.to_binary(predicted)
+
+        tp = np.sum(predicted & truth)
+        fp = np.sum(predicted & ~truth)
+        fn = np.sum(~predicted & truth)
+        return {
+            "true_positive": tp,
+            "false_positive": fp,
+            "false_negative": fn
+        }
+
+    def recall(self, predicted, truth):
+        cm = self.confusion_matrix(predicted, truth)
+        tp = cm["true_positive"]
+        fn = cm["false_negative"]
+
+        if fn + tp == 0:
+            return None
+
+        return tp / (fn + tp)
+
+    def precision(self, predicted, truth):
+        cm = self.confusion_matrix(predicted, truth)
+        tp = cm["true_positive"]
+        fp = cm["false_positive"]
+
+        if fp + tp == 0:
+            return None
+
+        return tp / (tp + fp)
+
+    def balanced(self, predicted, truth):
+        pc = self.precision(predicted, truth)
+        rc = self.recall(predicted, truth)
+
+        if pc is None or rc is None:
+            return None
+
+        return (pc + rc) / 2.0
+
+    def top5(self, predicted, truth, radius=15, samples=5):
+        _, y_limit, x_limit = truth.shape
+        pcopy = predicted[0].copy()
+        truth = truth[0]
+        correct = 0
+
+        def locate_max(p):
+            return np.unravel_index(np.argmax(p), p.shape)
+
+        for i in range(samples):
+            y, x = locate_max(pcopy)
+
+            y_min = max(0, y - radius)
+            y_max = min(y_limit, y + radius)
+
+            x_min = max(0, x - radius)
+            x_max = min(x_limit, x + radius)
+
+            pcopy[y_min:y_max+1, x_min:x_max+1] = -np.inf
+
+            correct += int(truth[y][x] == 1)
+
+        return correct / samples
+
     def measure(self, predicted, truth):
         assert predicted.shape == truth.shape
+        if predicted.ndim == 3:
+            predicted = np.expand_dims(predicted, axis=0)
+        assert predicted.ndim == 4
+        assert predicted.shape[1] == 1
 
-        if predicted.ndim == 4:
-            for i in range(len(predicted)):
-                measurement = self.metric(predicted[i], truth[i])
-                if measurement is not None:
-                    self.measurements.append(measurement)
-        else:
-            assert predicted.ndim == 3
-            measurement = self.metric(predicted, truth)
-            if measurement is not None:
-                self.measurements.append(measurement)
+        for p, t in zip(predicted, truth):
+            self.measurements.append(self.metric(p, t))
 
     def total(self):
-        if len(self.measurements) == 0:
-            return 0.
-        return sum(self.measurements) / len(self.measurements)
+        measurements = [m for m in self.measurements if m is not None]
+        if len(measurements) == 0:
+            return None
+        return np.mean(np.asarray(measurements))

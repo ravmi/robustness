@@ -126,7 +126,7 @@ class Metric():
         if predicted.ndim == 3:
             predicted = np.expand_dims(predicted, axis=0)
         assert predicted.ndim == 4
-        assert predicted.shape[1] == 1
+        assert predicted.shape[1] == 1, f"Only single channel is supported, found {predicted.shape[1]}"
 
         for p, t in zip(predicted, truth):
             self.measurements.append(self.metric(p, t))

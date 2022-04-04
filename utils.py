@@ -13,6 +13,8 @@ def img_to_net(data):
     assert data.ndim == 3
     return data.permute(2, 0, 1)
 
+def tensor_to_numpy(tensor):
+    return tensor.detach().cpu().numpy()
 
 def unnormalize(data):
     #mean = torch.tensor([8.55112426, 187.17984377, 3.40404531]).reshape(3, 1, 1)

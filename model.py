@@ -3,7 +3,7 @@ import torchvision
 import torch
 import numpy as np
 import config
-from utils import net_to_img, unnormalize
+from utils import net_to_img, unnormalize, tensor_to_numpy
 
 
 class PickingSegmentationResnet(nn.Module):
@@ -47,17 +47,15 @@ class PickingSegmentationResnet(nn.Module):
 
                 for metric in metrics:
                     metric.measure(
-                        predicted.detach().cpu().numpy(),
-                        y.detach().cpu().numpy())
+                        tensor_to_numpy(predicted),
+                        tensor_to_numpy(y)
+                    )
 
             logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
             for m in metrics:
                 logger.report_scalar(f"{experiment_name}/acc", m.metric_name, m.total())
 
-            def to_numpy(tensor):
-                return tensor.detach().cpu().numpy()
-
-            for x, y, p in zip(to_numpy(x), to_numpy(y), to_numpy(predicted)):
+            for x, y, p in zip(*[tensor_to_numpy(t) for t in [x, y, predicted]]):
                 # removing depth
                 x = x[:3, :, :]
                 x = unnormalize(x)

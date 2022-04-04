@@ -135,5 +135,5 @@ class Metric():
     def total(self):
         measurements = [m for m in self.measurements if m is not None]
         if len(measurements) == 0:
-            return None
+            return 0.
         return np.mean(np.asarray(measurements))

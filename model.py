@@ -10,7 +10,7 @@ class PickingSegmentationResnet(nn.Module):
     def __init__(self, criterion, device):
         super(PickingSegmentationResnet, self).__init__()
 
-        resnet = torchvision.models.segmentation.fcn_resnet50(num_classes=2)
+        resnet = torchvision.models.segmentation.fcn_resnet50(num_classes=1)
         resnet.backbone.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         if config.debug:
             resnet.backbone.layer1 = nn.Conv2d(64, 256, kernel_size=(1, 1))
@@ -55,7 +55,7 @@ class PickingSegmentationResnet(nn.Module):
             for m in metrics:
                 logger.report_scalar(f"{experiment_name}/acc", m.metric_name, m.total())
 
-            for x, y, p in zip(*[tensor_to_numpy(t) for t in [x, y, predicted]]):
+            for i, (x, y, p) in enumerate(zip(*[tensor_to_numpy(t) for t in [x, y, predicted]])):
                 # removing depth
                 x = x[:3, :, :]
                 x = unnormalize(x)

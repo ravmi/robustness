@@ -40,7 +40,7 @@ class Metric():
     def class_imbalance(self, predicted, truth):
         # features, height, width
         assert predicted.ndim == 3
-        guess = self.get_binary(predicted)
+        guess = self.to_binary(predicted)
         imbalance = np.all(guess == 0) or np.all(guess == 1)
 
         return imbalance * 1.0
@@ -57,7 +57,8 @@ class Metric():
         """
         assert predicted.ndim == 3
         assert truth.ndim == 3
-        predicted = self.to_binary(predicted)
+        predicted = self.to_binary(predicted) == 1
+        truth = truth == 1
 
         tp = np.sum(predicted & truth)
         fp = np.sum(predicted & ~truth)

@@ -104,6 +104,8 @@ class BrickDataset(torch.utils.data.Dataset):
         y = torch.tensor(y)
 
         y = y.long()
+        return x.float(), torch.unsqueeze(y, dim=0).float()
+
         y = F.one_hot(y, num_classes=2).permute(2, 0, 1)
 
         return x.float(), y.float()
@@ -142,6 +144,7 @@ class BrickDatasetAugmented(torch.utils.data.Dataset):
         #x, y = torch.tensor(x), torch.tensor(y)
         y = torch.tensor(y)
 
+        return x.float(), torch.unsqueeze(y, dim=0).float()
         y = y.long()
         y = F.one_hot(y, num_classes=2).permute(2, 0, 1)
 

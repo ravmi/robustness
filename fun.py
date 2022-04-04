@@ -1,9 +1,9 @@
 import torch
 import numpy as np
+from dataloader import BrickDataset
 
 
-x = np.arange(10)
-y = x * 1.0
-x = np.random.randn(10, 2, 2)
-
-print(torch.is_tensor(x))
+data = BrickDataset()
+print(len(data))
+print(data[0][0])
+print(data[0][1])

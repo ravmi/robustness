@@ -24,7 +24,8 @@ class PickingSegmentationResnet(nn.Module):
 
     def forward(self, x):
         predicted = self.resnet.forward(x)['out']
-        return nn.Softmax(dim=1)(predicted)
+        return predicted
+        #return nn.Softmax(dim=1)(predicted)
 
     def train(self):
         self.resnet.train()

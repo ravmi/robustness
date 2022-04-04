@@ -68,7 +68,7 @@ val_loader = DataLoader(val, batch_size=batch_size, shuffle=True)
 aug_loader = DataLoader(data_augmented, batch_size=batch_size, shuffle=True)
 
 ## Prepare the model and the optimizer ##
-criterion = nn.BCELoss()
+criterion = nn.BCEWithLogitsLoss()
 net = PickingSegmentationResnet(criterion, device)
 optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=0.)
 

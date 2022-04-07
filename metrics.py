@@ -152,12 +152,12 @@ class Top5Metric(AccuracyMetric):
             y, x = locate_max(pcopy)
 
             y_min = max(0, y - radius)
-            y_max = min(y_limit, y + radius)
+            y_max = min(y_limit, y + radius + 1)
 
             x_min = max(0, x - radius)
-            x_max = min(x_limit, x + radius)
+            x_max = min(x_limit, x + radius + 1)
 
-            pcopy[y_min:y_max+1, x_min:x_max+1] = -np.inf
+            pcopy[y_min:y_max, x_min:x_max] = -np.inf
 
             correct += int(truth[y][x] == 1)
 

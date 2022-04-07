@@ -130,7 +130,7 @@ class BalancedMetric(AccuracyMetric):
         fp = cm["false_positive"]
 
         if tp + fp == 0 or fn + tp == 0:
-            self.measurements.append(None)
+            return
 
         pc = tp / (tp + fp)
         rc = tp / (tp + fn)

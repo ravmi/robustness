@@ -10,7 +10,9 @@ from torch.utils.data.dataset import Subset
 import neptune.new as neptune
 from clearml import Task, Logger
 import argparse
-from metrics import Metric
+from metrics import PixelAccuracyMetric, ClassImbalanceMetric, RecallTotalMetric, PrecisionTotalMetric, \
+    RecallMetric, PrecisionMetric, BalancedMetric, Top5Metric
+
 import numpy as np
 from model import PickingSegmentationResnet
 from loggers import ClearMLLogger
@@ -73,12 +75,14 @@ net = PickingSegmentationResnet(criterion, device)
 optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=0.)
 
 metrics = [
-    Metric("pixel_accuracy"),
-    Metric("precision"),
-    Metric("recall"),
-    Metric("balanced"),
-    Metric("top5"),
-    Metric("class_imbalance")
+    PixelAccuracyMetric(),
+    ClassImbalanceMetric(),
+    RecallTotalMetric(),
+    PrecisionTotalMetric(),
+    RecallMetric(),
+    PrecisionMetric(),
+    BalancedMetric(),
+    Top5Metric()
 ]
 
 for epoch in range(epochs):

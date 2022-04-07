@@ -1,85 +1,117 @@
 import numpy as np
+from dataclasses import dataclass
 
-class Metric():
-    def __init__(self, metric):
-        """
-        Assumes that the arrays have just single channel (binary classification).
-        Inputs can have ndim = 3 or ndim = 4.
-        """
 
-        self.metric_name = metric
-        if metric == "pixel_accuracy":
-            self.metric = self.pixel_accuracy
-        elif metric == "recall":
-            self.metric = self.recall
-        elif metric == "precision":
-            self.metric = self.precision
-        elif metric == "balanced":
-            self.metric = self.balanced
-        elif metric == "top5":
-            self.metric = self.top5
-        elif metric == "class_imbalance":
-            self.metric = self.class_imbalance
-        else:
-            raise ValueError("Uncorrect metric given")
+def confusion_matrix(predicted, truth):
+    """
+    Returns a dict that represents the confusion matrix.
+    """
+    assert predicted.ndim == 3
+    assert truth.ndim == 3
+    predicted = to_binary(predicted) == 1
+    truth = truth == 1
 
+    tp = np.sum(predicted & truth)
+    fp = np.sum(predicted & ~truth)
+    fn = np.sum(~predicted & truth)
+    return {
+        "true_positive": tp,
+        "false_positive": fp,
+        "false_negative": fn
+    }
+
+
+def to_binary(predicted: np.ndarray):
+    """
+    Gives binary answers of shape predicted.shape
+    predicted: logits of shape (1, height, widths) - single channel
+
+    As the input are logits, transforming it to True/False is simple comparison to 0.
+    """
+    assert predicted.ndim == 3
+
+    return (predicted > 0.0) * 1.0
+
+
+class AccuracyMetric():
+    def __init__(self):
         self.measurements = list()
 
-    def to_binary(self, predicted: np.ndarray):
-        """
-        Gives binary answers of shape predicted.shape
-        predicted: logits of shape (1, height, widths) - single channel
+    def __str__(self):
+        return self.__class__.__name__
 
-        As the input are logits, transforming it to True/False is simple comparison to 0.
-        """
-        assert predicted.ndim == 3
+    def measure(self, x, y):
+        raise NotImplementedError
 
-        return (predicted > 0.0) * 1.0
+    def get_metric(self):
+        measurements = [m for m in self.measurements if m is not None]
+        if len(measurements) == 0:
+            return 0.
+        return np.mean(np.asarray(measurements))
 
 
-    def class_imbalance(self, predicted, truth):
+class PixelAccuracyMetric(AccuracyMetric):
+    def measure(self, predicted, truth):
+        predicted = self.to_binary(predicted)
+        compare = (predicted == truth).reshape(-1)
+
+        self.measurements.append(np.mean(compare))
+
+
+class ClassImbalanceMetric(AccuracyMetric):
+    def measure(self, predicted, truth):
         # features, height, width
         assert predicted.ndim == 3
         guess = self.to_binary(predicted)
         imbalance = np.all(guess == 0) or np.all(guess == 1)
 
-        return imbalance * 1.0
-
-    def pixel_accuracy(self, predicted, truth):
-        predicted = self.to_binary(predicted)
-        compare = (predicted == truth).reshape(-1)
-        return np.mean(compare)
+        self.measurements.append(imbalance * 1.0)
 
 
-    def confusion_matrix(self, predicted, truth):
-        """
-        Returns a dict that represents the confusion matrix.
-        """
-        assert predicted.ndim == 3
-        assert truth.ndim == 3
-        predicted = self.to_binary(predicted) == 1
-        truth = truth == 1
-
-        tp = np.sum(predicted & truth)
-        fp = np.sum(predicted & ~truth)
-        fn = np.sum(~predicted & truth)
-        return {
-            "true_positive": tp,
-            "false_positive": fp,
-            "false_negative": fn
-        }
-
-    def recall(self, predicted, truth):
+class RecallTotalMetric(AccuracyMetric):
+    def measure(self, predicted, truth):
         cm = self.confusion_matrix(predicted, truth)
+        tp = cm["true_positive"]
+        fn = cm["false_negative"]
+
+        self.measurements.append((tp, fn))
+
+    def get_metric(self):
+        total_tp = sum([tp for tp, fn in self.measurements])
+        total_fn = sum([fn for tp, fn in self.measurements])
+
+        return total_tp / (total_tp + total_fn)
+
+
+class PrecisionTotalMetric(AccuracyMetric):
+    def measure(self, predicted, truth):
+        cm = confusion_matrix(predicted, truth)
+        tp = cm["true_positive"]
+        fp = cm["false_positive"]
+
+        self.measurements.append((tp, fp))
+
+    def get_metric(self):
+        total_tp = sum([tp for tp, fp in self.measurements])
+        total_fp = sum([fp for tp, fp in self.measurements])
+
+        return total_tp / (total_tp + total_fp)
+
+
+class RecallMetric(AccuracyMetric):
+    def measure(self, predicted, truth):
+        cm = confusion_matrix(predicted, truth)
         tp = cm["true_positive"]
         fn = cm["false_negative"]
 
         if fn + tp == 0:
             return None
 
-        return tp / (fn + tp)
+        self.measurements.append(tp / (fn + tp))
 
-    def precision(self, predicted, truth):
+
+class PrecisionMetric(AccuracyMetric):
+    def measure(self, predicted, truth):
         cm = self.confusion_matrix(predicted, truth)
         tp = cm["true_positive"]
         fp = cm["false_positive"]
@@ -87,18 +119,27 @@ class Metric():
         if fp + tp == 0:
             return None
 
-        return tp / (tp + fp)
+        self.measurements.append(tp / (tp + fp))
 
-    def balanced(self, predicted, truth):
-        pc = self.precision(predicted, truth)
-        rc = self.recall(predicted, truth)
 
-        if pc is None or rc is None:
-            return None
+class BalancedMetric(AccuracyMetric):
+    def measure(self, predicted, truth):
+        cm = confusion_matrix(predicted, truth)
+        tp = cm["true_positive"]
+        fn = cm["false_negative"]
+        fp = cm["false_positive"]
 
-        return (pc + rc) / 2.0
+        if tp + fp == 0 or fn + tp == 0:
+            self.measurements.append(None)
 
-    def top5(self, predicted, truth, radius=15, samples=5):
+        pc = tp / (tp + fp)
+        rc = tp / (tp + fn)
+
+        self.measurements.append((pc + rc) / 2.0)
+
+
+class Top5Metric(AccuracyMetric):
+    def measure(self, predicted, truth, radius=15, samples=5):
         _, y_limit, x_limit = truth.shape
         pcopy = predicted[0].copy()
         truth = truth[0]
@@ -120,20 +161,4 @@ class Metric():
 
             correct += int(truth[y][x] == 1)
 
-        return correct / samples
-
-    def measure(self, predicted, truth):
-        assert predicted.shape == truth.shape
-        if predicted.ndim == 3:
-            predicted = np.expand_dims(predicted, axis=0)
-        assert predicted.ndim == 4
-        assert predicted.shape[1] == 1, f"Only single channel is supported, found {predicted.shape[1]}"
-
-        for p, t in zip(predicted, truth):
-            self.measurements.append(self.metric(p, t))
-
-    def total(self):
-        measurements = [m for m in self.measurements if m is not None]
-        if len(measurements) == 0:
-            return 0.
-        return np.mean(np.asarray(measurements))
+        self.measurements.append(correct / samples)

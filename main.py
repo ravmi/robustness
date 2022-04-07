@@ -44,7 +44,16 @@ batch_size = parameters['batch_size']
 if config.debug:
     device = torch.device("cpu")
 
-task = Task.init(project_name="robustness", task_name=f"lr_{lr}, robust_{robust}, epochs_{epochs}", reuse_last_task_id=False)
+parameters_in_name = {
+        'lr': lr,
+        'robust': robust,
+        'epochs': epochs,
+        'batch_size': batch_size,
+        }
+
+name = '_'.join(f'{k}:{v}' for k, v in parameters_in_name.items())
+
+task = Task.init(project_name="robustness", task_name=name, reuse_last_task_id=False)
 parameters = task.connect(parameters)
 logger = ClearMLLogger("loss_per_epoch")
 

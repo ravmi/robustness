@@ -52,7 +52,7 @@ class AccuracyMetric():
 
 class PixelAccuracyMetric(AccuracyMetric):
     def measure(self, predicted, truth):
-        predicted = self.to_binary(predicted)
+        predicted = to_binary(predicted)
         compare = (predicted == truth).reshape(-1)
 
         self.measurements.append(np.mean(compare))
@@ -62,7 +62,7 @@ class ClassImbalanceMetric(AccuracyMetric):
     def measure(self, predicted, truth):
         # features, height, width
         assert predicted.ndim == 3
-        guess = self.to_binary(predicted)
+        guess = to_binary(predicted)
         imbalance = np.all(guess == 0) or np.all(guess == 1)
 
         self.measurements.append(imbalance * 1.0)
@@ -70,7 +70,7 @@ class ClassImbalanceMetric(AccuracyMetric):
 
 class RecallTotalMetric(AccuracyMetric):
     def measure(self, predicted, truth):
-        cm = self.confusion_matrix(predicted, truth)
+        cm = confusion_matrix(predicted, truth)
         tp = cm["true_positive"]
         fn = cm["false_negative"]
 
@@ -112,7 +112,7 @@ class RecallMetric(AccuracyMetric):
 
 class PrecisionMetric(AccuracyMetric):
     def measure(self, predicted, truth):
-        cm = self.confusion_matrix(predicted, truth)
+        cm = confusion_matrix(predicted, truth)
         tp = cm["true_positive"]
         fp = cm["false_positive"]
 

@@ -46,7 +46,7 @@ class PickingSegmentationResnet(nn.Module):
                 losses.append(loss)
 
                 for metric in metrics:
-                    for pi, yi in zip(pi, yi):
+                    for pi, yi in zip(predicted, y):
                         metric.measure(
                             tensor_to_numpy(pi),
                             tensor_to_numpy(yi)
@@ -54,7 +54,7 @@ class PickingSegmentationResnet(nn.Module):
 
             logger.report_scalar(f"{experiment_name}/loss_per_epoch", "loss", np.asarray(losses).mean())
             for m in metrics:
-                logger.report_scalar(f"{experiment_name}/acc", m.metric_name, m.get_metric())
+                logger.report_scalar(f"{experiment_name}/acc", str(m), m.get_metric())
 
             for i, (x, y, p) in enumerate(zip(*[tensor_to_numpy(t) for t in [x, y, predicted]])):
                 # removing depth
